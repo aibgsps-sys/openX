@@ -197,6 +197,69 @@ function Search-ScheduledTasks {
     return $results
 }
 
+function Search-Registry {
+    param([string]$ProductName)
+    
+    $results = @()
+    
+    $registryPaths = @(
+        "HKCU:\Software",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\Software",
+        "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run",
+        "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\Software\WOW6432Node",
+        "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
+    
+    foreach ($regPath in $registryPaths) {
+        try {
+            if (Test-Path $regPath) {
+                $items = Get-ChildItem -Path $regPath -Recurse -ErrorAction SilentlyContinue | Where-Object {
+                    $_.Name -like "*$ProductName*" -or 
+                    ($_.GetValue("DisplayName") -like "*$ProductName*") -or
+                    ($_.GetValue("Publisher") -like "*$ProductName*") -or
+                    ($_.GetValue("InstallLocation") -like "*$ProductName*")
+                }
+                
+                foreach ($item in $items) {
+                    $displayPath = $item.PSPath -replace "Microsoft\.PowerShell\.Core\\Registry::", ""
+                    $results += [PSCustomObject]@{
+                        Type = "Registry Key"
+                        Path = $displayPath
+                        Size = 0
+                        Product = $ProductName
+                        RegistryKey = $item.PSPath
+                    }
+                }
+                
+                $properties = Get-Item -Path $regPath -ErrorAction SilentlyContinue | Where-Object {
+                    $_.GetValueNames() | ForEach-Object {
+                        $val = $_.GetValue($_)
+                        $val -like "*$ProductName*"
+                    }
+                }
+                
+                foreach ($prop in $properties) {
+                    $displayPath = $prop.PSPath -replace "Microsoft\.PowerShell\.Core\\Registry::", ""
+                    if ($results.Path -notcontains $displayPath) {
+                        $results += [PSCustomObject]@{
+                            Type = "Registry Key"
+                            Path = $displayPath
+                            Size = 0
+                            Product = $ProductName
+                            RegistryKey = $prop.PSPath
+                        }
+                    }
+                }
+            }
+        } catch {}
+    }
+    
+    return $results
+}
+
 function Start-FullScan {
     param([string]$ProductName)
     
@@ -207,6 +270,7 @@ function Start-FullScan {
     $Global:ScanResults += Search-EnvironmentVariables -ProductName $ProductName
     $Global:ScanResults += Search-Services -ProductName $ProductName
     $Global:ScanResults += Search-ScheduledTasks -ProductName $ProductName
+    $Global:ScanResults += Search-Registry -ProductName $ProductName
     
     return $Global:ScanResults
 }
@@ -262,6 +326,12 @@ function Remove-ScannedItems {
                 "Scheduled Task" {
                     Unregister-ScheduledTask -TaskName $item.Path -Confirm:$false -ErrorAction SilentlyContinue
                     Write-Log "已删除计划任务: $($item.Path)" "SUCCESS"
+                }
+                "Registry Key" {
+                    if ($item.RegistryKey) {
+                        Remove-Item -Path $item.RegistryKey -Recurse -Force -ErrorAction SilentlyContinue
+                        Write-Log "已删除注册表: $($item.Path)" "SUCCESS"
+                    }
                 }
             }
         } catch {
