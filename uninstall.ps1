@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 # OpenX 系列产品一键卸载工具
 # 支持 OpenX、OpenClaw、QClaw、360Claw 等所有换皮产品
 
