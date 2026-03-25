@@ -1,0 +1,118 @@
+# OpenX 常用命令参考
+
+## 常用初始化/配置命令速览（按使用阶段排序）
+
+### 1. 首次安装
+```bash
+node openx.mjs setup          # 创建本地配置与默认工作区
+node openx.mjs onboard        # 交互式向导：网关、通道、模型一站式配置
+```
+
+### 2. 交互式配置
+```bash
+node openx.mjs configure      # 图形化向导：凭证、通道、网关、模型、代理
+node openx.mjs config         # 进入同一向导（无子命令时）
+```
+
+### 3. 一键配置键值
+```bash
+node openx.mjs config get <dot.path>    # 读取任意配置项
+node openx.mjs config set <dot.path> <value>
+node openx.mjs config unset <dot.path>
+```
+
+### 4. 通道与凭证
+```bash
+node openx.mjs channels telegram login   # 扫码/Token 登录 Telegram
+node openx.mjs channels discord login    # 登录 Discord
+node openx.mjs channels whatsapp login   # 扫码登录 WhatsApp Web
+```
+
+### 5. 模型与提供商
+```bash
+node openx.mjs models list              # 查看可用模型
+node openx.mjs models scan              # 扫描本地 Ollama/等模型
+```
+
+### 6. 网关控制
+```bash
+node openx.mjs gateway                  # 启动 WebSocket 网关
+node openx.mjs gateway --port 18789     # 指定端口
+node openx.mjs gateway --force          # 强杀占用端口后启动
+```
+
+### 7. 验证与修复
+```bash
+node openx.mjs doctor                   # 健康检查 + 一键修复
+node openx.mjs doctor --deep            # 深度诊断
+```
+
+### 8. 重置与清理
+```bash
+node openx.mjs reset                    # 清空本地配置与数据（保留 CLI）
+node openx.mjs uninstall                # 完全卸载服务 + 数据
+```
+
+### 9. 打开控制台
+```bash
+node openx.mjs dashboard                # 自动复制令牌并打开浏览器控制台
+```
+
+### 10. 获取帮助
+```bash
+node openx.mjs <command> --help         # 任意命令子帮助
+node openx.mjs docs <关键词>            # 实时搜索官方文档
+```
+
+---
+
+## 网关启动命令（开发模式）
+
+### 方式 1：直接启动
+```bash
+node openx.mjs gateway --dev --allow-unconfigured
+```
+
+### 方式 2：使用 npm
+```bash
+npm run dev
+```
+
+## 停止网关
+在运行网关的终端中按 `Ctrl + C` 停止
+
+## 网关信息
+- 监听地址：ws://127.0.0.1:18789
+- Canvas 访问：http://127.0.0.1:18789/__openx__/canvas/
+- 配置文件：C:\Users\Administrator\.clawdbot\openx.json
+
+## 卸载工具
+
+### 运行卸载工具（需要管理员权限）
+```bash
+powershell -ExecutionPolicy Bypass -File "c:\Users\Administrator\AI\openX\uninstall.ps1"
+```
+
+## Git 命令
+
+### 提交更改
+```bash
+git add .
+git commit -m "提交信息"
+git push
+```
+
+### 查看状态
+```bash
+git status
+```
+
+## 注意事项
+1. 启动网关前确保在项目目录：`cd c:\Users\Administrator\AI\openX`
+2. 卸载工具需要以管理员身份运行 PowerShell
+3. 网关默认端口：18789
+4. 如遇端口冲突，可使用以下命令查看占用进程：
+   ```bash
+   Get-NetTCPConnection -LocalPort 18789
+   ```
+5. 以上命令覆盖从安装到日常调参的完整初始化流程；按需组合即可
